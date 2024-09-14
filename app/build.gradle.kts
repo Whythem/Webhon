@@ -76,4 +76,13 @@ dependencies {
 
     // Navigation for Jetpack Compose
     implementation ("androidx.navigation:navigation-compose:2.7.0")
+
+    // OkHttp for network requests
+    implementation ("com.squareup.okhttp3:okhttp:4.9.3")
+
+    // Gson for JSON parsing
+    implementation ("com.google.code.gson:gson:2.8.8")
+
+    // Kotlin Coroutines for background thread handling
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 }

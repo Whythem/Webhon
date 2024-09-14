@@ -21,6 +21,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.clickable
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +44,25 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+        fetchTopAnimeData()
+    }
+}
+
+private fun fetchTopAnimeData() {
+    // Launch a coroutine on the Main thread
+    CoroutineScope(Dispatchers.Main).launch {
+        // Call the API using our service
+        val topAnimeData = AnimeApiService.getTopAnime()
+
+        // Log or update the UI with the result
+        if (topAnimeData != null) {
+            // Log the entire JSON response
+            Log.d("MainActivity", "Top Anime: $topAnimeData")
+
+            // You can also parse and use specific data here as needed
+        } else {
+            Log.d("MainActivity", "Failed to fetch data")
         }
     }
 }
