@@ -1,15 +1,18 @@
-*.iml
 .gradle
+.kotlin
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
 /.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 .DS_Store
+.idea/*
+!.idea/icon.png
+*iml
+*.iml
+
+# Built files
+*/build
 /build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
+*.apk
+app/**/output.json
+
+# Unnecessary file
+*.swp
