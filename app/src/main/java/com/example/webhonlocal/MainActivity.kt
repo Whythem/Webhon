@@ -66,18 +66,26 @@ class MainActivity : ComponentActivity() {
 fun MyApp() {
     val navController = rememberNavController()
     Scaffold(
-        topBar = { Header() }, // Adding Header
-        bottomBar = { Footer(navController) } // Adding Footer
+        topBar = { Header() },
+        bottomBar = { Footer(navController) }
     ) {
-        NavHost(navController, startDestination = "grid", modifier = Modifier.padding(it)) {
-            composable("grid") { RectangleGrid(navController) }
-            composable("details/{mangaId}") { backStackEntry ->
-                val mangaId = backStackEntry.arguments?.getString("mangaId")?.toIntOrNull()
-                mangaId?.let { MangaDetailsScreen(mangaId, navController) }
+        // Set the background color of the entire app to #011724
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF011724)) // Set the color here
+            .padding(it)
+        ) {
+            NavHost(navController, startDestination = "grid") {
+                composable("grid") { RectangleGrid(navController) }
+                composable("details/{mangaId}") { backStackEntry ->
+                    val mangaId = backStackEntry.arguments?.getString("mangaId")?.toIntOrNull()
+                    mangaId?.let { MangaDetailsScreen(mangaId, navController) }
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun Header() {
@@ -157,7 +165,6 @@ fun RectangleGrid(navController: NavController, modifier: Modifier = Modifier) {
                     .padding(4.dp)
                     .height(100.dp)
                     .fillMaxWidth()
-                    .background(Color.Gray)
                     .clickable {
                         navController.navigate("details/${manga.mal_id}")
                     }
@@ -171,6 +178,7 @@ fun RectangleGrid(navController: NavController, modifier: Modifier = Modifier) {
         }
     }
 }
+
 
 // Manga Details Screen Composable
 @Composable
