@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -136,19 +137,29 @@ fun MangaDetailsScreen(mangaId: Int, navController: NavController) {
         Text(text = errorMessage!!, color = Color.Red)
     } else {
         manga?.let {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = it.title, color = Color.White)
-                Spacer(modifier = Modifier.height(8.dp))
-                Image(
-                    painter = rememberImagePainter(it.images.jpg.image_url),
-                    contentDescription = it.title,
-                    modifier = Modifier.fillMaxWidth().height(200.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = it.synopsis, color = Color.White)
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { navController.popBackStack() }) {
-                    Text("Back")
+            LazyColumn(
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp) // Espacement entre les éléments
+            ) {
+                item {
+                    Text(text = it.title, color = Color.White)
+                }
+                item {
+                    Image(
+                        painter = rememberImagePainter(it.images.jpg.image_url),
+                        contentDescription = it.title,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
+                }
+                item {
+                    Text(text = it.synopsis, color = Color.White)
+                }
+                item {
+                    Button(onClick = { navController.popBackStack() }) {
+                        Text("Back")
+                    }
                 }
             }
         } ?: run {
@@ -156,6 +167,7 @@ fun MangaDetailsScreen(mangaId: Int, navController: NavController) {
         }
     }
 }
+
 
 // API Service
 object AnimeApiService {
