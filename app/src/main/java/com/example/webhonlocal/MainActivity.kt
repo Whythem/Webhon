@@ -22,6 +22,7 @@ import androidx.navigation.compose.*
 import coil.compose.rememberImagePainter
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -64,7 +65,7 @@ fun MyApp() {
                 composable("most_followed") { MostFollowedScreen(navController) }
                 composable("new_manga") { NewMangaScreen(navController) }
                 composable("search") { SearchScreen(navController) }
-                composable("settings") { SettingsScreen(navController) } // Écran des paramètres
+                composable("settings") { SettingsScreen(navController) }
             }
         }
     }
@@ -112,7 +113,7 @@ fun RectangleGrid(navController: NavController, mangaList: List<Manga>, modifier
     }
 }
 
-// MangaDetailsScreen Composable
+// Manga Details Screen
 @Composable
 fun MangaDetailsScreen(mangaId: Int, navController: NavController) {
     var manga by remember { mutableStateOf<Manga?>(null) }
@@ -182,6 +183,38 @@ object AnimeApiService {
         }
     }
 
+    suspend fun getRecommendedManga(): List<RecommendedManga> {
+        val url = "https://api.jikan.moe/v4/recommendations/manga"
+        val request = Request.Builder().url(url).build()
+
+        return withContext(Dispatchers.IO) {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    println("Unexpected code $response")
+                    return@withContext emptyList()
+                }
+
+                val responseBody = response.body?.string()
+                responseBody?.let {
+                    val gson = Gson()
+                    val recommendationResponse = gson.fromJson(it, RecommendationResponse::class.java)
+                    // Extraire les données des entrées
+                    return@withContext recommendationResponse.data.flatMap { rec ->
+                        rec.entry.map { entry ->
+                            RecommendedManga(
+                                mal_id = entry.mal_id,
+                                title = entry.title,
+                                images = entry.images
+                            )
+                        }
+                    }
+                }
+                emptyList()
+            }
+        }
+    }
+
+
     suspend fun getMangaDetails(mangaId: Int): Manga? {
         val url = "https://api.jikan.moe/v4/manga/$mangaId"
         val request = Request.Builder().url(url).build()
@@ -206,7 +239,22 @@ object AnimeApiService {
 }
 
 // Data classes
+data class RecommendationResponse(
+    val data: List<Recommendation>
+)
 data class MangaResponse(val data: List<Manga>)
+data class Recommendation(
+    val mal_id: String,
+    val entry: List<Entry>,
+    val content: String,
+    val date: String,
+    val user: User
+)
+data class RecommendedManga(
+    val mal_id: Int,
+    val title: String,
+    val images: Images
+)
 data class MangaDetailsResponse(val data: Manga)
 data class Manga(
     val mal_id: Int,
@@ -221,15 +269,82 @@ data class Manga(
 data class Images(val jpg: ImageUrls)
 data class ImageUrls(val image_url: String)
 
-// MostFollowedScreen Composable
+data class User(
+    val url: String,
+    val username: String
+)
+
+data class Entry(
+    val mal_id: Int,
+    val url: String,
+    val images: Images,
+    val title: String
+)
+
+// Most Followed Screen
 @Composable
 fun MostFollowedScreen(navController: NavController) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Most Followed Manga", color = Color.White)
+    var recommendedMangaList by remember { mutableStateOf<List<RecommendedManga>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        try {
+            recommendedMangaList = AnimeApiService.getRecommendedManga()
+        } catch (e: Exception) {
+            errorMessage = "Erreur lors du chargement des recommandations."
+        } finally {
+            isLoading = false
+        }
+    }
+
+    if (isLoading) {
+        CircularProgressIndicator()
+    } else if (errorMessage != null) {
+        Text(text = errorMessage!!, color = Color.Red)
+    } else {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            contentPadding = PaddingValues(4.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(recommendedMangaList) { manga ->
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .height(160.dp)
+                        .fillMaxWidth()
+                        .clickable {
+                            navController.navigate("details/${manga.mal_id}")
+                        }
+                ) {
+                    Image(
+                        painter = rememberImagePainter(manga.images.jpg.image_url),
+                        contentDescription = manga.title,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .padding(7.dp)
+                    ) {
+                        Text(
+                            text = manga.title,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
-// NewMangaScreen Composable
+// New Manga Screen
 @Composable
 fun NewMangaScreen(navController: NavController) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -237,8 +352,7 @@ fun NewMangaScreen(navController: NavController) {
     }
 }
 
-
-
+// Search Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(navController: NavController) {
@@ -317,7 +431,6 @@ fun Header(navController: NavController) {
                     navController.navigate("new_manga")
                 }
             )
-            // Onglet de recherche retiré
         }
         Spacer(modifier = Modifier.height(8.dp))
         Divider(color = Color.White, thickness = 2.dp)
@@ -325,6 +438,7 @@ fun Header(navController: NavController) {
     }
 }
 
+// Footer Composable
 @Composable
 fun Footer(navController: NavController) {
     Column(
@@ -344,11 +458,12 @@ fun Footer(navController: NavController) {
         ) {
             FooterButton(iconRes = R.drawable.ic_home, onClick = { navController.navigate("grid") })
             FooterButton(iconRes = R.drawable.ic_search, onClick = { navController.navigate("search") })
-            FooterButton(iconRes = R.drawable.ic_login, onClick = { navController.navigate("settings") }) // Change ici
+            FooterButton(iconRes = R.drawable.ic_login, onClick = { navController.navigate("settings") })
         }
     }
 }
 
+// Footer Button Composable
 @Composable
 fun FooterButton(iconRes: Int, onClick: () -> Unit) {
     Column(
@@ -363,12 +478,13 @@ fun FooterButton(iconRes: Int, onClick: () -> Unit) {
         )
     }
 }
+
+// Settings Screen Composable
 @Composable
 fun SettingsScreen(navController: NavController) {
-    // État pour les options de paramètres
     var notificationsEnabled by remember { mutableStateOf(true) }
     var darkModeEnabled by remember { mutableStateOf(false) }
-    var languageSelected by remember { mutableStateOf("English") } // Exemple pour la langue
+    var languageSelected by remember { mutableStateOf("English") }
 
     Column(
         modifier = Modifier
@@ -385,7 +501,6 @@ fun SettingsScreen(navController: NavController) {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Options de paramètres avec état
         SettingItem(
             label = "Enable Notifications",
             isChecked = notificationsEnabled,
@@ -414,13 +529,14 @@ fun SettingsScreen(navController: NavController) {
     }
 }
 
+// Setting Item Composable
 @Composable
 fun SettingItem(label: String, isChecked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable { onCheckedChange(!isChecked) }, // Inverser l'état en cliquant
+            .clickable { onCheckedChange(!isChecked) },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -435,6 +551,8 @@ fun SettingItem(label: String, isChecked: Boolean, onCheckedChange: (Boolean) ->
         )
     }
 }
+
+// Language Setting Item Composable
 @Composable
 fun LanguageSettingItem(selectedLanguage: String, onLanguageChange: (String) -> Unit) {
     Row(
@@ -448,17 +566,17 @@ fun LanguageSettingItem(selectedLanguage: String, onLanguageChange: (String) -> 
             onClick = { onLanguageChange("English") },
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedLanguage == "English") Color.Green else Color.Gray // Utiliser containerColor
+                containerColor = if (selectedLanguage == "English") Color.Green else Color.Gray
             )
         ) {
             Text("English", color = Color.White)
         }
-        Spacer(modifier = Modifier.width(8.dp)) // Ajout d'un espacement entre les boutons
+        Spacer(modifier = Modifier.width(8.dp))
         Button(
             onClick = { onLanguageChange("French") },
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedLanguage == "French") Color.Green else Color.Gray // Utiliser containerColor
+                containerColor = if (selectedLanguage == "French") Color.Green else Color.Gray
             )
         ) {
             Text("French", color = Color.White)
