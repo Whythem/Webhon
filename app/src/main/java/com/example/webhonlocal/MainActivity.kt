@@ -64,7 +64,6 @@ fun MyApp() {
                 }
                 composable("recent_updates") { RectangleGrid(navController, mangaList) }
                 composable("most_followed") { MostFollowedScreen(navController) }
-                composable("new_manga") { NewMangaScreen(navController) }
                 composable("search") { SearchScreen(navController) }
                 composable("settings") { SettingsScreen(navController) }
             }
@@ -356,13 +355,6 @@ fun MostFollowedScreen(navController: NavController) {
     }
 }
 
-// New Manga Screen
-@Composable
-fun NewMangaScreen(navController: NavController) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("New Manga Releases", color = Color.White)
-    }
-}
 
 // Search Screen
 @OptIn(ExperimentalMaterial3Api::class)
@@ -416,7 +408,7 @@ fun Header(navController: NavController) {
             .background(Color(0xFF011724))
             .padding(8.dp)
     ) {
-        Text("Bibliothèque", color = Color(0xFFD4F5F5), style = MaterialTheme.typography.headlineMedium)
+        Text("Webhon", color = Color(0xFFD4F5F5), style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(4.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -434,13 +426,6 @@ fun Header(navController: NavController) {
                 color = Color(0xFFD4F5F5),
                 modifier = Modifier.clickable {
                     navController.navigate("most_followed")
-                }
-            )
-            Text(
-                "New manga",
-                color = Color(0xFFD4F5F5),
-                modifier = Modifier.clickable {
-                    navController.navigate("new_manga")
                 }
             )
         }
