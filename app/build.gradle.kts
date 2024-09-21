@@ -66,6 +66,8 @@ dependencies {
     implementation("androidx.compose.material:material:1.5.1")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.1")
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.1")
+    implementation ("androidx.compose.foundation:foundation:<version>")
+    implementation ("androidx.compose.foundation:foundation-layout:<version>")
 
     // Navigation for Jetpack Compose
     implementation("androidx.navigation:navigation-compose:2.6.0")

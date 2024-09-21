@@ -25,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import androidx.compose.ui.res.painterResource
 
 // Main Activity
 class MainActivity : ComponentActivity() {
@@ -37,7 +36,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// App Composable
 @Composable
 fun MyApp() {
     val navController = rememberNavController()
@@ -48,7 +46,7 @@ fun MyApp() {
     }
 
     Scaffold(
-        topBar = { Header() },
+        topBar = { Header(navController) },
         bottomBar = { Footer(navController) }
     ) {
         Box(modifier = Modifier
@@ -62,6 +60,11 @@ fun MyApp() {
                     val mangaId = backStackEntry.arguments?.getString("mangaId")?.toIntOrNull()
                     mangaId?.let { MangaDetailsScreen(it, navController) }
                 }
+                composable("recent_updates") { RectangleGrid(navController, mangaList) }
+                composable("most_followed") { MostFollowedScreen(navController) }
+                composable("new_manga") { NewMangaScreen(navController) }
+                composable("search") { SearchScreen(navController) }
+                composable("settings") { SettingsScreen(navController) } // Écran des paramètres
             }
         }
     }
@@ -218,9 +221,69 @@ data class Manga(
 data class Images(val jpg: ImageUrls)
 data class ImageUrls(val image_url: String)
 
-// Header and Footer Composables
+// MostFollowedScreen Composable
 @Composable
-fun Header() {
+fun MostFollowedScreen(navController: NavController) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Most Followed Manga", color = Color.White)
+    }
+}
+
+// NewMangaScreen Composable
+@Composable
+fun NewMangaScreen(navController: NavController) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("New Manga Releases", color = Color.White)
+    }
+}
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchScreen(navController: NavController) {
+    var query by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .background(Color(0xFF011724)),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Search Manga",
+            color = Color.White,
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text("Enter manga title") },
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.Gray,
+                cursorColor = Color.White
+            )
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = {
+                // Logique de recherche ici
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Search")
+        }
+    }
+}
+
+// Header Composable
+@Composable
+fun Header(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -233,9 +296,28 @@ fun Header() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text("Last update", color = Color(0xFFD4F5F5))
-            Text("Most follow", color = Color(0xFFD4F5F5))
-            Text("New manga", color = Color(0xFFD4F5F5))
+            Text(
+                "Last update",
+                color = Color(0xFFD4F5F5),
+                modifier = Modifier.clickable {
+                    navController.navigate("recent_updates")
+                }
+            )
+            Text(
+                "Most follow",
+                color = Color(0xFFD4F5F5),
+                modifier = Modifier.clickable {
+                    navController.navigate("most_followed")
+                }
+            )
+            Text(
+                "New manga",
+                color = Color(0xFFD4F5F5),
+                modifier = Modifier.clickable {
+                    navController.navigate("new_manga")
+                }
+            )
+            // Onglet de recherche retiré
         }
         Spacer(modifier = Modifier.height(8.dp))
         Divider(color = Color.White, thickness = 2.dp)
@@ -261,9 +343,8 @@ fun Footer(navController: NavController) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             FooterButton(iconRes = R.drawable.ic_home, onClick = { navController.navigate("grid") })
-            FooterButton(iconRes = R.drawable.ic_follow, onClick = { /* Handle Follow click */ })
-            FooterButton(iconRes = R.drawable.ic_search, onClick = { /* Handle Search click */ })
-            FooterButton(iconRes = R.drawable.ic_login, onClick = { /* Handle Login click */ })
+            FooterButton(iconRes = R.drawable.ic_search, onClick = { navController.navigate("search") })
+            FooterButton(iconRes = R.drawable.ic_login, onClick = { navController.navigate("settings") }) // Change ici
         }
     }
 }
@@ -280,6 +361,107 @@ fun FooterButton(iconRes: Int, onClick: () -> Unit) {
                 .size(24.dp)
                 .clickable { onClick() }
         )
-        Spacer(modifier = Modifier.height(4.dp))
+    }
+}
+@Composable
+fun SettingsScreen(navController: NavController) {
+    // État pour les options de paramètres
+    var notificationsEnabled by remember { mutableStateOf(true) }
+    var darkModeEnabled by remember { mutableStateOf(false) }
+    var languageSelected by remember { mutableStateOf("English") } // Exemple pour la langue
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .background(Color(0xFF011724)),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start
+    ) {
+        Text(
+            text = "Settings",
+            color = Color.White,
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Options de paramètres avec état
+        SettingItem(
+            label = "Enable Notifications",
+            isChecked = notificationsEnabled,
+            onCheckedChange = { notificationsEnabled = it }
+        )
+        SettingItem(
+            label = "Dark Mode",
+            isChecked = darkModeEnabled,
+            onCheckedChange = { darkModeEnabled = it }
+        )
+        LanguageSettingItem(
+            selectedLanguage = languageSelected,
+            onLanguageChange = { languageSelected = it }
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = {
+                // Logique pour sauvegarder les paramètres
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Save Settings")
+        }
+    }
+}
+
+@Composable
+fun SettingItem(label: String, isChecked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable { onCheckedChange(!isChecked) }, // Inverser l'état en cliquant
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            color = Color.White,
+            modifier = Modifier.weight(1f)
+        )
+        Switch(
+            checked = isChecked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(checkedThumbColor = Color.Green, uncheckedThumbColor = Color.Red)
+        )
+    }
+}
+@Composable
+fun LanguageSettingItem(selectedLanguage: String, onLanguageChange: (String) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Button(
+            onClick = { onLanguageChange("English") },
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (selectedLanguage == "English") Color.Green else Color.Gray // Utiliser containerColor
+            )
+        ) {
+            Text("English", color = Color.White)
+        }
+        Spacer(modifier = Modifier.width(8.dp)) // Ajout d'un espacement entre les boutons
+        Button(
+            onClick = { onLanguageChange("French") },
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (selectedLanguage == "French") Color.Green else Color.Gray // Utiliser containerColor
+            )
+        ) {
+            Text("French", color = Color.White)
+        }
     }
 }
