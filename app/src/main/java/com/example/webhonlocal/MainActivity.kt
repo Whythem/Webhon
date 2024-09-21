@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -453,26 +454,38 @@ fun Footer(navController: NavController) {
                 .padding(8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            FooterButton(iconRes = R.drawable.ic_home, onClick = { navController.navigate("grid") })
-            FooterButton(iconRes = R.drawable.ic_search, onClick = { navController.navigate("search") })
-            FooterButton(iconRes = R.drawable.ic_login, onClick = { navController.navigate("settings") })
+            FooterButton(
+                iconRes = R.drawable.ic_home,
+                onClick = { navController.navigate("grid") },
+            )
+            FooterButton(
+                iconRes = R.drawable.ic_search,
+                onClick = { navController.navigate("search") },
+            )
+            FooterButton(
+                iconRes = R.drawable.ic_login,
+                onClick = { navController.navigate("settings") }
+            )
         }
     }
 }
 
 // Footer Button Composable
 @Composable
-fun FooterButton(iconRes: Int, onClick: () -> Unit) {
+fun FooterButton(iconRes: Int, onClick: () -> Unit, tintColor: Color = Color(0xFFD4F5F5)) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = rememberImagePainter(iconRes),
-            contentDescription = null,
-            modifier = Modifier
-                .size(24.dp)
-                .clickable { onClick() }
-        )
+        IconButton(onClick = onClick) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onClick() },
+                tint = tintColor // Apply the tint color to the icon
+            )
+        }
     }
 }
 
